@@ -38,6 +38,7 @@ public class GameActivity extends Activity implements  WorldListener, GameListen
 	private GameView gameView;
 	private long previousMillis;
 	private Thread gameThread;
+	private boolean isFirstFocus;
 	
 	/** Called when the activity is first created. */
 	@Override
@@ -63,31 +64,15 @@ public class GameActivity extends Activity implements  WorldListener, GameListen
 		
 		world.addWorldListener(this);
 		model.addGameListener(this);
-		gameThread = new Thread(world);
-		gameThread.start();
-		world.resume();
-	}
-	
-	@Override
-	protected void onStart()
-	{
-		super.onStart();
-	}
-	
-	@Override
-	protected void onDestroy()
-	{
-		World world = model.getWorld();
-		world.destroy();
-		
-		super.onDestroy();
 	}
 	
 	@Override
 	protected void onPause()
 	{
+		model.pause();
 		World world = model.getWorld();
-		world.pause();
+		world.setOver(true);
+		gameThread = null;
 		
 		super.onPause();
 	}
@@ -97,14 +82,24 @@ public class GameActivity extends Activity implements  WorldListener, GameListen
 	{
 		super.onResume();
 		
+		World world = model.getWorld();
+		world.setOver(false);
+		gameThread = new Thread(world);
+		gameThread.start();
+		
+		isFirstFocus = true;
 	}
 	
 	@Override
-	protected void onRestart()
+	public void onWindowFocusChanged(boolean hasFocusFlag)
 	{
-		super.onResume();
-		
-		openOptionsMenu();
+	    super.onWindowFocusChanged(hasFocusFlag);  
+	    
+	    if (hasFocusFlag && isFirstFocus)
+	    {
+	    	isFirstFocus = false;
+	        openOptionsMenu();
+	    }
 	}
 	
 	@Override
